@@ -11,4 +11,9 @@ public class Worker implements Runnable{
 
 
 
+	public void run(){
+		System.out.println("I'm a lumberjack and I'm OK");
+	}//End run
+
+
 }//End class
