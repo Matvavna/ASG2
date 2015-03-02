@@ -14,6 +14,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Worker implements Runnable{
 
+	//The thread that is running this worker
+	Thread wrapperThread = null;
+
 	/*
 	 *This is the manager that created this Worker
 	 *Need a reference to this so we can pass back new tasks
@@ -35,38 +38,55 @@ public class Worker implements Runnable{
 
 	//Runs until it is given the task to kill itself
 	public void run(){
+		System.out.println("Worker Starting");
 		while(true){
 			//Only one Worker can be looking at tasksToComplete at a time
 			//Otherwise, isEmpty could end up in an inconsistent state
 			synchronized(tasksToComplete){
-				if(tasksToComplete.isEmpty()){
-					try{
-						tasksToComplete.wait();
-					}catch(InterruptedException exception){
-						System.out.println("Worker: Interrupted");
-						System.out.println(exception);
-					}
+				//The only time we should hit this statement is if we get woken up by
+				  //the manager
+				if(!tasksToComplete.isEmpty()){
+					System.out.println("Queue not empty. Gon grab meself anotter task mon");
+
+					Task currentTask;
+
+					//Grab a task from the manager
+					//This will be null if the list is actually empty
+					currentTask = this.requestTask();
+
+					//Make sure a task was actually returned
+					//If currenTask is null, that means no task was returned from the manager
+					//The continue statement puts is back at the top of the while,
+					//  and we'll wait on the task list again
+					if(currentTask == null) continue;
+
+					currentTask.setWorker(this);
+					currentTask.execute();
+
+					}else{
+						try{
+							System.out.println("Queue empty. Adding self back to pool");
+							this.manager.returnWorkerToPool(this.wrapperThread);
+							tasksToComplete.wait();
+						}catch(InterruptedException exception){
+							System.out.println("Worker: Interrupted");
+							System.out.println(exception);
+						}
 				}
 			}//End sychronized block
 
-			//I don't think this bit needs to be synchronized, because ThreadPoolManager
-			// Will handle synchronizing requests for tasks
-			Task currentTask;
-
-			//Grab a task from the manager
-			//This will be null if the list is actually empty
-			currentTask = this.requestTask();
-
-			//Make sure a task was actually returned
-			//If currenTask is null, that means no task was returned from the manager
-			//The continue statement puts is back at the top of the while,
-			//  and we'll wait on the task list again
-			if(currentTask == null) continue;
-
-
-			currentTask.execute();
 		}
 	}//End run
+
+
+	public void setWrapperThread(Thread t){
+		//Can't be final, but we don't want anyone resetting the thread
+		if(this.wrapperThread == null){
+			wrapperThread = t;
+		}else{
+			System.out.println("Worker: Error, wrapperThread already set");
+		}
+	}//End setWrapperThread
 
 	private Task requestTask(){
 		Task newTask = null;
@@ -80,6 +100,13 @@ public class Worker implements Runnable{
 			System.out.println(exception);
 		}
 		return newTask;
+	}//End requestTask
+
+	public void addTask(Task task){
+		synchronized(tasksToComplete){
+			tasksToComplete.add(task);
+			tasksToComplete.notify();
+		}
 	}
 
 
