@@ -3,7 +3,6 @@
 
 
 JC = javac -d .
-
 default: all
 
 all:
