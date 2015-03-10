@@ -11,10 +11,11 @@ import cs455.harvester.task.Task;
 import cs455.harvester.task.ExitTask;
 import cs455.harvester.task.AddTaskTask;
 import cs455.harvester.task.PrintMessageTask;
+import cs455.harvester.task.CrawlTask;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ArrayList;
 
 
 
@@ -29,7 +30,9 @@ public class ThreadPoolManager implements Runnable{
 
   //Hold references to tasks waiting to be completed
   //When there is a task to be done, it is grabbed by the next available worker
-  private final ConcurrentLinkedQueue<Task> tasksToComplete = new ConcurrentLinkedQueue<Task>();
+  private final ArrayList<Task> tasksToComplete = new ArrayList<Task>();
+
+  private final TaskRegistry completedTasks = new TaskRegistry();
 
 
   public ThreadPoolManager(int _numberOfThreads){
@@ -60,7 +63,7 @@ public class ThreadPoolManager implements Runnable{
     for(int i = 0; i < threadCount; i++){
       String workerName = "Worker:" + i;//Generate a unique name for each thread
       System.out.println("Generating Worker");
-      Worker worker = new Worker(this, tasksToComplete);
+      Worker worker = new Worker(this, tasksToComplete, workerName);
       System.out.println("Generating thread");
       Thread workerThread = workerThread = new Thread(worker, workerName);
       worker.setWrapperThread(workerThread);
@@ -80,19 +83,34 @@ public class ThreadPoolManager implements Runnable{
     }
   }//End startWorkers
 
-  //I don't think this will even need to be used
-  private void addTask(Task task){
+  public boolean checkTaskRegistry(){
+    return true;
+  }//End checkTaskRegistry
+
+  public void addTask(Task task){
     synchronized(tasksToComplete){
-      this.tasksToComplete.add(task);
-      tasksToComplete.notify();
+      //Only add the task if we haven't already done it
+      if(!this.completedTasks.contains(task) || !this.tasksToComplete.contains(task)){
+        //System.out.println("Size: " + this.tasksToComplete.size());
+        System.out.println("Manager: Adding task " + task);
+        this.tasksToComplete.add(task);
+        tasksToComplete.notify();
+      }
     }
   }//End addTask
+
+  public void addCompletedTask(Task task){
+    synchronized(completedTasks){
+      System.out.println("Manager: Adding completed task " + task);
+      this.completedTasks.add(task);
+    }
+  }//End addCompletedTask
 
   public Task getTask()throws NoSuchElementException{
     //This needs to be synchronized
     //If not, then two Workers could both recieve the last Task in the Queue
     synchronized(tasksToComplete){
-      return tasksToComplete.poll();
+      return tasksToComplete.remove(0);
     }
   }//End getTask
 
@@ -107,12 +125,17 @@ public class ThreadPoolManager implements Runnable{
   //This main is for the purposes of testing this class only
   //ThreadPoolManager should always be used as an object inside something else
   public static void main(String args[]){
-    ThreadPoolManager tpm = new ThreadPoolManager(4);
-    for(int i = 0; i < 4; i++){
-      tpm.addTask(new AddTaskTask(new PrintMessageTask("Hello" + i)));
-    }
-    Thread managerThread = new Thread(tpm);
-    managerThread.start();
+
+
+    // ThreadPoolManager tpm = new ThreadPoolManager(4);
+    // for(int i = 0; i < 4; i++){
+    //   tpm.addTask(new AddTaskTask(new PrintMessageTask("Hello" + i)));
+    // }
+
+    // tpm.addTask(new CrawlTask("http://www.cs.colostate.edu/", 0));
+
+    // Thread managerThread = new Thread(tpm);
+    // managerThread.start();
   }
 
 }//End class

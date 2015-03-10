@@ -1,3 +1,6 @@
-Assignment two for cs455 spring 2015
+Notes on parsing URLs:
+	I truncate anything after a '#' because that's a link to a position on a page.
 
-Please don't copy this. That would be pretty darm lame of you.
+
+When make is called, all the in/out files under the nodes are removed so that
+they aren't appended to in the next run

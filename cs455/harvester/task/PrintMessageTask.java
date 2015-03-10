@@ -9,6 +9,8 @@ package cs455.harvester.task;
 
 import cs455.harvester.threadpool.Worker;
 
+import java.util.ArrayList;
+
 
 public class PrintMessageTask implements Task{
 
@@ -22,13 +24,35 @@ public class PrintMessageTask implements Task{
 
 	//This is what the Worker calls
 	//All the actual work kicks off right here
-	public void execute(){
+	public ArrayList<Task> execute(){
 		System.out.println("PrintMessageTask: " + this.message);
+		return new ArrayList<Task>();
 	}//End execute
 
 
 	public void setWorker(Worker w){
 		this.worker = w;
 	}//End setWorker
+
+	public boolean equals(Object o){
+			if(!(o instanceof Task)) return false;
+			if(o == this) return true;
+
+			int otherTaskHash = ((Task) o).hashCode();
+
+			return otherTaskHash == this.hashCode();
+	}//End equals
+
+	public String getType(){
+		return "PrintMessageTask";
+	}//End getType
+
+	public int hashCode(){
+		return this.toString().hashCode();
+	}//End getHash
+
+	public String toString(){
+		return this.getType() + ":" + this.message;
+	}//End toString
 
 }//End class
