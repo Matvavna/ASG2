@@ -8,8 +8,6 @@ package cs455.harvester.threadpool;
 
 import cs455.harvester.threadpool.Worker;
 import cs455.harvester.task.Task;
-import cs455.harvester.task.ExitTask;
-import cs455.harvester.task.AddTaskTask;
 import cs455.harvester.task.PrintMessageTask;
 import cs455.harvester.task.CrawlTask;
 
