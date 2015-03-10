@@ -4,3 +4,7 @@ Notes on parsing URLs:
 
 When make is called, all the in/out files under the nodes are removed so that
 they aren't appended to in the next run
+
+
+Only works on lists of 8 machines.
+The URL supplied to this crawler must match one in the config file

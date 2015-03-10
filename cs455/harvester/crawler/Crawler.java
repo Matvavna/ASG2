@@ -9,11 +9,18 @@ package cs455.harvester.crawler;
 import cs455.harvester.threadpool.ThreadPoolManager;
 import cs455.harvester.task.*;
 import cs455.harvester.communication.ServerThread;
+import cs455.harvester.communication.Connection;
 import cs455.harvester.communication.ConnectionCache;
 import cs455.harvester.wireformats.Event;
 
+import java.util.Arrays;
 import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class Crawler{
 
@@ -29,6 +36,10 @@ public class Crawler{
 
 	//Objects that handle all the communication with other crawlers
 	private ConnectionCache cache = new ConnectionCache();
+	//Info from config file
+	String[] hostNames = new String[7];
+	int[] ports = new int[7];
+	String[] domains = new String[7];
 
 
 	public Crawler(int _portnum, int _threadPoolSize, String _rootUrl, String _pathToConfigFile){
@@ -48,15 +59,9 @@ public class Crawler{
 		this.startServer();
 		this.startThreadPoolManager();
 		this.createDirectory();
+		this.parseConfigFile();
 		this.setupConnections();
 	}//End initailize
-
-	private void startThreadPoolManager(){
-		System.out.println("Starting thread pool");
-		manager = new ThreadPoolManager(this.threadPoolSize);
-		Thread managerThread = new Thread(manager);
-		managerThread.start();
-	}//End startThreadPoolManager
 
 	private void startServer(){
 		try{
@@ -75,6 +80,13 @@ public class Crawler{
 		}
 	}//End startServer
 
+	private void startThreadPoolManager(){
+		System.out.println("Starting thread pool");
+		manager = new ThreadPoolManager(this.threadPoolSize);
+		Thread managerThread = new Thread(manager);
+		managerThread.start();
+	}//End startThreadPoolManager
+
 	private void createDirectory(){
 		//Turn the url parameter into a absolute file path under /tmp/wbarras
 		this.generateRootFilePath();
@@ -89,6 +101,90 @@ public class Crawler{
 		this.createSubDirectories();
 
 	}//End createDirectory
+
+	private void parseConfigFile(){
+		File configFile = new File(this.pathToConfigFile);
+
+		FileReader reader = null;
+		try{
+			reader = new FileReader(configFile);
+		}catch(FileNotFoundException exception){
+			System.out.println("Crawler: Error opening reader on config file");
+			System.out.println(exception);
+		}
+
+		BufferedReader bufferedReader = new BufferedReader(reader);
+
+		int count = 0;
+		boolean selfFlag = false;
+		try{
+			String line = bufferedReader.readLine();
+			while(line != null){//Read to end of file
+				//The delimiter between the hostname and the port number
+				int colonDelimiter = line.indexOf(":");
+				//The delimiter between the portnumber and the domain to crawl
+				int commaDelimiter = line.indexOf(",");
+				String host = line.substring(0,colonDelimiter);
+				int port = Integer.valueOf(line.substring(colonDelimiter+1,commaDelimiter));
+				String domain = line.substring(commaDelimiter+1);
+
+				//Check to see if this entry is the one for this crawler
+				//We don't want to be connecting to it later if it is
+				if(this.rootUrl.equals(domain)){
+					selfFlag = true;
+					line = bufferedReader.readLine();
+					//count++;
+					continue;
+				}
+
+				hostNames[count] = host+".cs.colostate.edu";
+				ports[count] = port;
+				domains[count] = domain;
+
+				line = bufferedReader.readLine();
+
+				count++;
+			}
+		}catch(IOException exception){
+			System.out.println("Crawler: Error reading config file");
+			System.out.println(exception);
+		}
+
+		if(selfFlag == false){
+			System.out.println("Crawler: Url assigned to this crawler did not match the config file");
+		}
+
+		if(count != 7){
+			System.out.println("Crawler: Did not find eight machines in config file");
+			System.exit(-1);
+		}else{
+			// System.out.println(Arrays.toString(hostNames));
+			// System.out.println(Arrays.toString(ports));
+			// System.out.println(Arrays.toString(domains));
+		}
+
+	}//End parseConfigFile
+
+	private void setupConnections(){
+		for(int i = 0; i < this.hostNames.length; i++){
+			String hostName = hostNames[i];
+			int port = ports[i];
+			String domain = domains[i];
+
+			System.out.println("Setting up connection to " + hostName);
+
+			try{
+				Socket socket = new Socket(hostName, port);
+
+				Connection connection = new Connection(this, socket);
+				this.cache.add(domain, connection);
+			}catch(IOException exception){
+				System.out.println("Crawler: Error creating socket to " + hostName);
+				System.out.println(exception);
+			}
+			
+		}
+	}
 
 	//Create the /tmp/wbarras dir
 	private void createUserDir(){
