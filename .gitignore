@@ -1,5 +1,7 @@
 cs455/harvester/*/*.class
+cs455/overlay/
 
 jericho-html-3.3.jar
 META-INF
 net
+
