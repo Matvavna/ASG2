@@ -198,14 +198,14 @@ public class Crawler{
 	}
 
 	public void sendTask(Event event, String recievingDomain){
-		Connection connection = null;
+		System.out.println("Sending task to domain " + recievingDomain);
 		//Snag the connection that was set up to the recieving domain
 		synchronized(this.cache){
-			connection = this.cache.get(recievingDomain);
+			Connection connection = this.cache.get(recievingDomain);
+			//Send it the message contained in the event
+			connection.write(event.getBytes());
 		}
 
-		//Send it the message contained in the event
-		connection.write(event.getBytes());
 	}//End sendTask
 
 	//Create the /tmp/wbarras dir
