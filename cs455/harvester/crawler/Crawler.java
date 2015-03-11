@@ -82,7 +82,7 @@ public class Crawler{
 
 	private void startThreadPoolManager(){
 		System.out.println("Starting thread pool");
-		manager = new ThreadPoolManager(this.threadPoolSize);
+		manager = new ThreadPoolManager(this.threadPoolSize, this);
 		Thread managerThread = new Thread(manager);
 		managerThread.start();
 	}//End startThreadPoolManager
@@ -182,9 +182,20 @@ public class Crawler{
 				System.out.println("Crawler: Error creating socket to " + hostName);
 				System.out.println(exception);
 			}
-			
+
 		}
 	}
+
+	public void sendTask(Event event, String recievingDomain){
+		Connection connection = null;
+		//Snag the connection that was set up to the recieving domain
+		synchronized(this.cache){
+			connection = this.cache.get(recievingDomain);
+		}
+
+		//Send it the message contained in the event
+		connection.write(event.getBytes());
+	}//End sendTask
 
 	//Create the /tmp/wbarras dir
 	private void createUserDir(){

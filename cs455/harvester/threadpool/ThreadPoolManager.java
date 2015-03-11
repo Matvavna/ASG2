@@ -6,6 +6,7 @@ package cs455.harvester.threadpool;
  *Maintains a queue of worker threads and a queue of tasks, and assigns the tasks to the workers
  */
 
+import cs455.harvester.crawler.Crawler;
 import cs455.harvester.threadpool.Worker;
 import cs455.harvester.task.Task;
 import cs455.harvester.task.PrintMessageTask;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 
 public class ThreadPoolManager implements Runnable{
 
+  private final Crawler crawler;
   private final int numberOfThreads;
 
   //This holds references to the Threads running available workers
@@ -33,8 +35,9 @@ public class ThreadPoolManager implements Runnable{
   private final TaskRegistry completedTasks = new TaskRegistry();
 
 
-  public ThreadPoolManager(int _numberOfThreads){
+  public ThreadPoolManager(int _numberOfThreads, Crawler _crawler){
     numberOfThreads = _numberOfThreads;
+    this.crawler = _crawler;
   }//End constructor
 
 
@@ -61,7 +64,7 @@ public class ThreadPoolManager implements Runnable{
     for(int i = 0; i < threadCount; i++){
       String workerName = "Worker:" + i;//Generate a unique name for each thread
       System.out.println("Generating Worker");
-      Worker worker = new Worker(this, tasksToComplete, workerName);
+      Worker worker = new Worker(this, tasksToComplete, workerName, this.crawler);
       System.out.println("Generating thread");
       Thread workerThread = workerThread = new Thread(worker, workerName);
       worker.setWrapperThread(workerThread);
@@ -75,12 +78,20 @@ public class ThreadPoolManager implements Runnable{
   //Starts each of the Workers in the queue
   private void startWorkers(){
     synchronized(availableWorkers){
-      for(Thread workerThreadToStart : this.availableWorkers){
+      //Have to move all the threads to another array so I can clear this one
+        //before I start the threads in it
+      ArrayList<Thread> copy = new ArrayList<Thread>();
+      for(Thread copyThread : availableWorkers){
+        copy.add(copyThread);
+      }
+      availableWorkers.clear();
+      for(Thread workerThreadToStart : copy){
         workerThreadToStart.start();
       }
     }
   }//End startWorkers
 
+  //I...I don't remember what this is for
   public boolean checkTaskRegistry(){
     return true;
   }//End checkTaskRegistry
@@ -90,7 +101,7 @@ public class ThreadPoolManager implements Runnable{
       //Only add the task if we haven't already done it
       if(!this.completedTasks.contains(task) || !this.tasksToComplete.contains(task)){
         //System.out.println("Size: " + this.tasksToComplete.size());
-        System.out.println("Manager: Adding task " + task);
+        //System.out.println("Manager: Adding task " + task);
         this.tasksToComplete.add(task);
         tasksToComplete.notify();
       }
@@ -104,6 +115,12 @@ public class ThreadPoolManager implements Runnable{
     }
   }//End addCompletedTask
 
+  public boolean checkDuplicateTask(Task task){
+    synchronized(completedTasks){
+      return this.completedTasks.contains(task);
+    }
+  }//End checkDuplicateTask
+
   public Task getTask()throws NoSuchElementException{
     //This needs to be synchronized
     //If not, then two Workers could both recieve the last Task in the Queue
@@ -116,8 +133,27 @@ public class ThreadPoolManager implements Runnable{
     synchronized(availableWorkers){
       System.out.println("Returning thread " + workerThread.getName() + " to pool");
       this.availableWorkers.add(workerThread);
+      System.out.println("Available Workers: " + availableWorkers.size());
+      if(availableWorkers.size() == this.numberOfThreads){
+        this.checkDone();
+      }
     }
   }//End returnToQueue
+
+  public void removeWorkerFromPool(Thread workerThread){
+    synchronized(availableWorkers){
+      System.out.println("Removing thread " + workerThread.getName() + " from pool");
+      this.availableWorkers.remove(workerThread);
+      //System.out.println("Available Workers: " + availableWorkers.size());
+      //if(availableWorkers.size() == this.numberOfThreads){
+      //  this.checkDone();
+      //}
+    }
+  }
+
+  private void checkDone(){
+    System.out.println("I think we're all done folks");
+  }
 
 
   //This main is for the purposes of testing this class only

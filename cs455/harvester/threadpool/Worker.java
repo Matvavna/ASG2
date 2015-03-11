@@ -6,6 +6,8 @@ package cs455.harvester.threadpool;
  *Assigned tasks by the ThreadPoolManager
  */
 
+import cs455.harvester.crawler.Crawler;
+import cs455.harvester.wireformats.Event;
 import cs455.harvester.task.Task;
 import cs455.harvester.threadpool.ThreadPoolManager;
 
@@ -16,6 +18,8 @@ public class Worker implements Runnable{
 
 	//The thread that is running this worker
 	Thread wrapperThread = null;
+
+	private final Crawler crawler;
 
 	/*
 	 *This is the manager that created this Worker
@@ -32,10 +36,11 @@ public class Worker implements Runnable{
 
 	private final String workerName;
 
-	public Worker(ThreadPoolManager _manager, ArrayList<Task> _tasksToComplete, String name){
+	public Worker(ThreadPoolManager _manager, ArrayList<Task> _tasksToComplete, String name, Crawler _crawler){
 		manager = _manager;
 		tasksToComplete = _tasksToComplete;
 		workerName = name;
+		this.crawler = _crawler;
 	}//End constructor
 
 
@@ -60,17 +65,18 @@ public class Worker implements Runnable{
 					currentTask = this.requestTask();
 
 
-					}else{
-						try{
-							//System.out.println("Queue empty. Adding self back to pool");
-							//Niceness measure. Sleep for a bit before returning to pool
-							this.wrapperThread.sleep(1000);
-							this.manager.returnWorkerToPool(this.wrapperThread);
-							tasksToComplete.wait();
-						}catch(InterruptedException exception){
-							System.out.println("Worker: Interrupted");
-							System.out.println(exception);
-						}
+				}else{
+					try{
+						//System.out.println("Queue empty. Adding self back to pool");
+						//Niceness measure. Sleep for a bit before returning to pool
+						this.manager.returnWorkerToPool(this.wrapperThread);
+						tasksToComplete.wait();
+					}catch(InterruptedException exception){
+						System.out.println("Worker: Interrupted");
+						System.out.println(exception);
+					}finally{
+						this.manager.removeWorkerFromPool(this.wrapperThread);
+					}
 				}
 			}//End sychronized block
 
@@ -85,6 +91,7 @@ public class Worker implements Runnable{
 			//Set up and execute the task
 			currentTask.setWorker(this);
 			ArrayList<Task> newTasks = currentTask.execute();
+
 			//Place current task in finished list, add others to taskQueue
 			this.organizeTasks(currentTask, newTasks);
 
@@ -104,7 +111,9 @@ public class Worker implements Runnable{
 	private Task requestTask(){
 		Task newTask = null;
 		try{
-			newTask = this.manager.getTask();
+			synchronized(this.manager){
+				newTask = this.manager.getTask();
+			}
 		}catch(NoSuchElementException exception){
 			//Hopefully this branch is never ever reached
 			//If it is, then a concurrency issue is causing workers to think the task
@@ -119,6 +128,7 @@ public class Worker implements Runnable{
 			this.manager.addTask(task);
 	}//End addTask
 
+	//Adds current task to completed tasks, adds the new tasks to the task list
 	private void organizeTasks(Task currentTask, ArrayList<Task> newTasks){
 		this.manager.addCompletedTask(currentTask);
 
@@ -126,5 +136,27 @@ public class Worker implements Runnable{
 			this.addTask(taskToAdd);
 		}
 	}//End organizeTasks
+
+	//Checks to see if a task has already been done
+	public boolean checkDuplicateTask(Task task){
+		synchronized(this.manager){
+			return this.manager.checkDuplicateTask(task);
+		}
+	}//End checkDuplicateTask
+
+	//The task is marshalled into an Event that gets sent over the wire
+	public void sendTask(Event event, String recievingDomain){
+		this.crawler.sendTask(event,recievingDomain);
+	}//End sendTask
+
+	public void nice(int time){
+		try{
+			System.out.printf("Worker %s going to sleep before retrieving new task\n", this.workerName);
+			this.wrapperThread.sleep(time);
+		}catch(InterruptedException exception){
+			System.out.println("Worker: Interrupted");
+			System.out.println(exception);
+		}
+	}
 
 }//End class
