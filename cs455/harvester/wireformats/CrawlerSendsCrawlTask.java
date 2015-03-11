@@ -94,6 +94,13 @@ public class CrawlerSendsCrawlTask implements Event{
 
 	}//End marshall constructor
 
+	public String getCrawlAddress(){
+		return this.crawlAddressString;
+	}//End getCrawlAddress
+
+	public String getSendingAddress(){
+		return this.sendingAddressString;
+	}//End getSendingAddress
 
 	public int getType(){
 		return this.messageType;

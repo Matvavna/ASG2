@@ -12,6 +12,7 @@ import cs455.harvester.communication.ServerThread;
 import cs455.harvester.communication.Connection;
 import cs455.harvester.communication.ConnectionCache;
 import cs455.harvester.wireformats.Event;
+import cs455.harvester.wireformats.CrawlerSendsCrawlTask;
 
 import java.util.Arrays;
 import java.io.File;
@@ -55,7 +56,7 @@ public class Crawler{
 	}//End constructor
 
 	public void beginCrawling(){
-		CrawlTask firstTask = new CrawlTask(this.rootUrl, 1, this.rootFilePath);
+		CrawlTask firstTask = new CrawlTask(this.rootUrl, 0, this.rootFilePath);
 		manager.addTask(firstTask);
 	}//End beginCrawling
 
@@ -314,7 +315,24 @@ public class Crawler{
 	public void onEvent(Event event){
 		System.out.println("crawler.onEvent()");
 		System.out.println(event);
+
+		int type = event.getType();
+
+		switch(type){
+			case 1:		this.eventOne(new CrawlerSendsCrawlTask(event.getBytes()));
+								break;
+			default: System.out.println("This doesn't seem to be a handled event");
+								break;
+		}
 	}//End onEvent
+
+	private void eventOne(CrawlerSendsCrawlTask csct){
+		String crawlAddress = csct.getCrawlAddress();
+		String sendingAddress = csct.getSendingAddress();
+
+		CrawlTask newTask = new CrawlTask(crawlAddress, 0, this.rootFilePath,sendingAddress);
+		manager.addTask(newTask);
+	}//End eventOne
 
 
 	//Anything past here is static and only used in main()--------------->>><<<

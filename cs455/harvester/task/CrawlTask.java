@@ -42,6 +42,13 @@ public class CrawlTask implements Task{
 		workingDirectory = _workingDirectory;
 	}//End constructor
 
+	public CrawlTask(String s, int rl, String _workingDirectory, String sentFrom){
+		url = s;
+		recursionLevel = rl;
+		workingDirectory = _workingDirectory;
+		this.updateIn(sentFrom);
+	}//End constructor
+
 
 	//This is what the Worker calls
 	//All the actual work kicks off right here

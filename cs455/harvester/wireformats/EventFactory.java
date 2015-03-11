@@ -45,6 +45,8 @@ public class EventFactory{
 
 		//Add logic here to turn the byte stream into an event...homie
 		switch(type){
+			case 1:  	event = new CrawlerSendsCrawlTask(data);
+								break;
 			default: System.out.println("That message is not even a real message!");
 							 System.exit(-1);
 		}
