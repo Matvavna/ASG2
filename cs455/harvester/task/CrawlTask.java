@@ -341,6 +341,28 @@ public class CrawlTask implements Task{
 		}
 	}
 
+	private void addEdgeFromOtherDomain(String otherDomainUrl){
+		String pathToInFile = this.generateNodePath(this.url)+"/in";
+		try{
+			//System.out.printf("Adding url %s to file %s\n", this.url, pathToInFile);
+			PrintWriter outFileWriter = new PrintWriter(new BufferedWriter(new FileWriter(pathToInFile,true)));
+			outFileWriter.println(otherDomainUrl);
+			outFileWriter.flush();
+		}catch(FileNotFoundException exception){
+			System.out.println("CrawlTask: Error creating in file");
+			System.out.println(exception);
+			System.exit(-1);
+		}catch(SecurityException exception){
+			System.out.println("CrawlTask: Error creating in file");
+			System.out.println(exception);
+			System.exit(-1);
+		}catch(IOException exception){
+			System.out.println("CrawlTask: Error creating in file");
+			System.out.println(exception);
+			System.exit(-1);
+		}
+	}
+
 	private void sendTask(String otherDomainUrl)throws MalformedURLException{
 		CrawlerSendsCrawlTask taskEvent = new CrawlerSendsCrawlTask(otherDomainUrl, this.url);
 
