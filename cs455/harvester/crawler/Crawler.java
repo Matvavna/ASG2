@@ -356,7 +356,7 @@ public class Crawler{
 
 	public boolean allDone(){
 		//If it contains no zeros,then everyone is done
-		return !this.completeStatus.containsValue(0);
+		return !this.completeStatus.containsValue(false);
 	}
 
 	public void onEvent(Event event){
