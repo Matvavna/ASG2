@@ -349,6 +349,9 @@ public class Crawler{
 
 		int doneint = 1;
 		if(!done) doneint = 0;
+
+		if(this.pendingCrawlRequests > 0) doneint = 0;
+
 		for(String domain : this.domains){
 			sendTask(new CrawlerUpdateCompleteStatus(this.rootUrl,doneint), domain);
 		}
