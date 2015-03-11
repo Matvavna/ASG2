@@ -139,7 +139,8 @@ public class ThreadPoolManager implements Runnable{
       this.availableWorkers.add(workerThread);
       //System.out.println("Available Workers: " + availableWorkers.size());
       if(availableWorkers.size() == this.numberOfThreads){
-        this.checkDone();
+        // this.checkDone();
+        System.out.println("If I sit here for a while, I'm done");
       }
     }
   }//End returnToQueue
@@ -150,7 +151,8 @@ public class ThreadPoolManager implements Runnable{
       this.availableWorkers.remove(workerThread);
       //System.out.println("Available Workers: " + availableWorkers.size());
       if(availableWorkers.size() == this.numberOfThreads){
-        this.checkDone();
+        //this.checkDone();
+        System.out.println("If I sit here for a while, I'm done");
       }
     }
   }
