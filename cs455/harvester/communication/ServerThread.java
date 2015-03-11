@@ -41,6 +41,7 @@ public class ServerThread extends Thread{
 		Socket socket;
 		try{ //Listen at port portNum, and open socket to an incoming connection
 			while(true){
+				System.out.println("ServerThread: Waiting for connection");
 				//messageWithId("Ready to connect. . .");
 				socket = serverSocket.accept();
 				//messageWithId("Socket Generated");
