@@ -196,6 +196,8 @@ public class Crawler{
 				if(domain.equals("http://www.colostate.edu")){
 					domain = "http://www.colostate.edu/Depts/Psychology";
 				}
+
+				domains[i] = domain;
 			}catch(MalformedURLException exception){
 				System.out.println("Crawler: Error normalizing domain");
 				System.out.println(exception);
@@ -232,20 +234,6 @@ public class Crawler{
 				this.pendingCrawlRequests++;
 			}
 		}
-
-		// String domain = recievingDomain;
-		//
-		// try{
-		// 	domain = new URL(domain).getHost();
-		// 	//Psych is a special flower
-		// 	//Deal with their bullshit
-		// 	if(domain.equals("http://www.colostate.edu")){
-		// 		domain = "http://www.colostate.edu/Depts/Psychology";
-		// 	}
-		// }catch(MalformedURLException exception){
-		// 	System.out.println("Crawler: Error normalizing domain");
-		// 	System.out.println(exception);
-		// }
 
 		//System.out.println("Sending task to domain " + recievingDomain);
 		//Snag the connection that was set up to the recieving domain
