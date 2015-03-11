@@ -175,6 +175,10 @@ public class Crawler{
 
 			System.out.println("Setting up connection to " + hostName + " on port " + port);
 
+			if(port != this.portnum){
+				System.out.println("Something is fucky with the ports");
+			}
+
 			try{
 				InetAddress hostAddress = InetAddress.getByName(hostName);
 
