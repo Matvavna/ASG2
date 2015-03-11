@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.net.Socket;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class Crawler{
@@ -175,10 +176,15 @@ public class Crawler{
 			System.out.println("Setting up connection to " + hostName + " on port " + port);
 
 			try{
-				Socket socket = new Socket(hostName, port);
+				InetAddress hostAddress = InetAddress.getByName(hostName);
+
+				Socket socket = new Socket(hostAddress, port);
 
 				Connection connection = new Connection(this, socket);
 				this.cache.add(domain, connection);
+			}catch(UnknownHostException exception){
+				System.out.println("Crawler: Error creating InetAddress from host name");
+				System.out.println(exception);
 			}catch(IOException exception){
 				System.out.println("Crawler: Error creating socket to " + hostName);
 				System.out.println(exception);
