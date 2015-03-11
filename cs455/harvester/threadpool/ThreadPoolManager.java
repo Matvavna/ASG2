@@ -149,9 +149,9 @@ public class ThreadPoolManager implements Runnable{
       System.out.println("Removing thread " + workerThread.getName() + " from pool");
       this.availableWorkers.remove(workerThread);
       //System.out.println("Available Workers: " + availableWorkers.size());
-      //if(availableWorkers.size() == this.numberOfThreads){
-      //  this.checkDone();
-      //}
+      if(availableWorkers.size() == this.numberOfThreads){
+        this.checkDone();
+      }
     }
   }
 
