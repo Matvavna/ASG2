@@ -67,6 +67,7 @@ public class Crawler{
 		try{
 			ServerThread server = new ServerThread(this.portnum, this);
 			server.start();
+			System.out.println("Crawler: Server Created and Running");
 		}catch(IOException exception){
 			System.out.println("Crawler: Error initializing ServerThread");
 			System.out.println(exception);
