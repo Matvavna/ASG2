@@ -107,6 +107,7 @@ public class ThreadPoolManager implements Runnable{
         //System.out.println("Manager: Adding task " + task);
         this.tasksToComplete.add(task);
         tasksToComplete.notify();
+        this.checkDone(false);
       }
     }
   }//End addTask
@@ -139,7 +140,7 @@ public class ThreadPoolManager implements Runnable{
       this.availableWorkers.add(workerThread);
       //System.out.println("Available Workers: " + availableWorkers.size());
       if(availableWorkers.size() == this.numberOfThreads){
-        // this.checkDone();
+        this.checkDone(true);
         System.out.println("If I sit here for a while, I'm done");
       }
     }
@@ -157,14 +158,14 @@ public class ThreadPoolManager implements Runnable{
     }
   }
 
-  private void checkDone(){
+  private void checkDone(boolean done){
     if(firstTime){
       firstTime = false;
       return;
     }
 
     //Else
-    this.crawler.setDone(true);
+    this.crawler.setDone(done);
     if(this.crawler.allDone()){
       System.out.println("Crawler finished. Reciever Finished messages from all other crawlers");
       System.out.println("Exiting...");

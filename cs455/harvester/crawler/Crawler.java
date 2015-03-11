@@ -333,16 +333,25 @@ public class Crawler{
 	}//End getConnectionCache
 
 	public void setDone(boolean done){
+		boolean update = true;
+		//Onlu update if the value is actually new
+		if(done == this.completeStatus.get(this.rootUrl)){
+			update = false;
+		}
+
 		this.completeStatus.put(this.rootUrl, done);
 
-		int doneint = 1;
-		if(!done) doneint = 0;
+		if(update){
+			int doneint = 1;
+			if(!done) doneint = 0;
 
-		if(this.pendingCrawlRequests > 0) doneint = 0;
+			if(this.pendingCrawlRequests > 0) doneint = 0;
 
-		for(String domain : this.domains){
-			sendTask(new CrawlerUpdateCompleteStatus(this.rootUrl,doneint), domain);
+			for(String domain : this.domains){
+				sendTask(new CrawlerUpdateCompleteStatus(this.rootUrl,doneint), domain);
+			}
 		}
+
 	}//End setDone
 
 	public boolean allDone(){
