@@ -44,6 +44,7 @@ public class ServerThread extends Thread{
 				System.out.println("ServerThread: Waiting for connection");
 				//messageWithId("Ready to connect. . .");
 				socket = serverSocket.accept();
+				System.out.println("ServerThread: Accepted connection");
 				//messageWithId("Socket Generated");
 				Connection connection = new Connection(crawler, socket);
 				//messageWithId("Connection Generated");
@@ -51,7 +52,7 @@ public class ServerThread extends Thread{
 				//This will probably break if you have more than one node running on a machine
 				String index = socket.getInetAddress().getHostAddress();
 				///(TO REMOVE)index = index.concat(String.valueOf(socket.getPort()));
-				//System.out.println("ServerThread: Adding connection w/ key: " + index);
+				System.out.println("ServerThread: Adding connection w/ key: " + index);
 				cache.add(index, connection);
 				//messageWithId("Connection added to ConnectionCache");
 				//Open up new Connection
