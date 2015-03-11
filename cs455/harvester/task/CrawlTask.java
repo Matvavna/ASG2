@@ -30,7 +30,7 @@ import java.net.MalformedURLException;
 
 public class CrawlTask implements Task{
 
-	private final int recursionLimit = 2;
+	private final int recursionLimit = 1;
 
 
 	protected String url;
