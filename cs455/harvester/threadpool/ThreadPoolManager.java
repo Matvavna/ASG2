@@ -115,7 +115,7 @@ public class ThreadPoolManager implements Runnable{
     synchronized(completedTasks){
       System.out.println("Manager: Adding completed task " + task);
       this.completedTasks.add(task);
-      this.crawler.setDone(false);
+      //this.crawler.setDone(false);
     }
   }//End addCompletedTask
 
@@ -150,10 +150,10 @@ public class ThreadPoolManager implements Runnable{
       System.out.println("Removing thread " + workerThread.getName() + " from pool");
       this.availableWorkers.remove(workerThread);
       //System.out.println("Available Workers: " + availableWorkers.size());
-      if(availableWorkers.size() == this.numberOfThreads){
+      //if(availableWorkers.size() == this.numberOfThreads){
         //this.checkDone();
-        System.out.println("If I sit here for a while, I'm done");
-      }
+        //System.out.println("If I sit here for a while, I'm done");
+      //}
     }
   }
 
