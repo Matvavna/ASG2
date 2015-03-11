@@ -182,7 +182,7 @@ public class Crawler{
 			try{
 				InetAddress hostAddress = InetAddress.getByName(hostName);
 
-				Socket socket = new Socket(domain, port);
+				Socket socket = new Socket(hostName, port);
 
 				Connection connection = new Connection(this, socket);
 				this.cache.add(domain, connection);
