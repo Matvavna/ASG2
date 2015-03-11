@@ -80,7 +80,7 @@ public class CrawlTask implements Task{
 
 		//If this task was sent from another domain, we need to add that url to our in file
 		if(this.sentFrom!=null){
-			this.updateIn(this.sentFrom);
+			this.addEdgeFromOtherDomain(this.sentFrom);
 		}
 
 		ArrayList<Task> newTasks = new ArrayList<Task>();
