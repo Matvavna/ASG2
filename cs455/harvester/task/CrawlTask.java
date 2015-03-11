@@ -137,7 +137,7 @@ public class CrawlTask implements Task{
 
 		//Sleep for 20 seconds after completing crawling
 		//Don't sleep if it's a duplicate or a broken link, because that's wasteful
-		this.worker.nice(1000);
+		this.worker.nice(20000);
 
 		return newTasks;
 	}//End execute
