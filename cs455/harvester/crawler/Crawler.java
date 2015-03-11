@@ -21,7 +21,11 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.net.Socket;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.net.MalformedURLException;
+
+
 
 public class Crawler{
 
@@ -172,6 +176,18 @@ public class Crawler{
 			String hostName = hostNames[i];
 			int port = ports[i];
 			String domain = domains[i];
+
+			try{
+				domain = new URL(domain).getHost();
+				//Psych is a special flower
+				//Deal with their bullshit
+				if(domain.equals("http://www.colostate.edu")){
+					domain = "http://www.colostate.edu/Depts/Psychology";
+				}
+			}catch(MalformedURLException exception){
+				System.out.println("Crawler: Error normalizing domain");
+				System.out.println(exception);
+			}
 
 			System.out.println("Setting up connection to " + hostName + " on port " + port);
 
