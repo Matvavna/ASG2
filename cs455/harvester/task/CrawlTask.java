@@ -1,16 +1,17 @@
 package cs455.harvester.task;
 
 /*
-*Author: Tiger Barras
-*Task.java
-*Reads one webpage
-*/
+ *Author: Tiger Barras
+ *Task.java
+ *Reads one webpage
+ */
 
 import cs455.harvester.threadpool.Worker;
 import cs455.harvester.crawler.Parser;
 import cs455.harvester.task.PrintMessageTask;
 import cs455.harvester.wireformats.Event;
 import cs455.harvester.wireformats.CrawlerSendsCrawlTask;
+
 
 import net.htmlparser.jericho.*;
 
@@ -24,15 +25,17 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.net.HttpURLConnection;
-
 import java.net.MalformedURLException;
+
 
 public class CrawlTask implements Task{
 
-	private String url;
+	private final int recursionLimit = 2;
+
+
+	protected String url;
 	private final int recursionLevel;
 	private final String workingDirectory;
-	private String sentFrom = null;
 	//This does not get set in constructor, but by separate method
 	  //This is because the worker is not known when the task is created
 	private Worker worker;
@@ -43,12 +46,7 @@ public class CrawlTask implements Task{
 		workingDirectory = _workingDirectory;
 	}//End constructor
 
-	public CrawlTask(String s, int rl, String _workingDirectory, String _sentFrom){
-		url = s;
-		recursionLevel = rl;
-		workingDirectory = _workingDirectory;
-		sentFrom = _sentFrom;
-	}//End constructor
+
 
 
 	//This is what the Worker calls
@@ -78,11 +76,6 @@ public class CrawlTask implements Task{
 		//Set up directory and files
 		this.initDirectory(this.generateNodePath(this.url));
 
-		//If this task was sent from another domain, we need to add that url to our in file
-		if(this.sentFrom!=null){
-			this.addEdgeFromOtherDomain(this.sentFrom);
-		}
-
 		ArrayList<Task> newTasks = new ArrayList<Task>();
 
 		//This returns a list of all the absolute links on the page from the listed domains
@@ -103,7 +96,7 @@ public class CrawlTask implements Task{
 					//Only spawn a new task if the recursion level isn't maxxed
 					CrawlTask toAdd = new CrawlTask(pageUrl, this.recursionLevel+1, this.workingDirectory);
 					boolean addTaskFlag = true;
-					if(this.recursionLevel >= 2){
+					if(this.recursionLevel >= this.recursionLimit){
 						//Don't add the task if we're already at the recursion limit
 						addTaskFlag = false;
 					}
@@ -128,7 +121,8 @@ public class CrawlTask implements Task{
 				}else{//The URL is in another Crawler's domain, so we have to send the task to it
 					//Send task to appropriate domain
 					try{
-						this.sendTask(pageUrl);
+						CrawlerSendsCrawlTask taskEvent = new CrawlerSendsCrawlTask(pageUrl, this.url);
+						this.sendTask(taskEvent, pageUrl);
 					}catch(MalformedURLException exception){
 						System.out.println("CrawlTask: Error while finding reciever domain for sendTask()");
 						System.out.println(exception);
@@ -245,7 +239,7 @@ public class CrawlTask implements Task{
 		return s;
 	}//End urlToPath
 
-	private String generateNodePath(String nodeUrl){
+	protected String generateNodePath(String nodeUrl){
 		String cleanedUrl = urlToPath(nodeUrl);
 
 		return this.workingDirectory + "/nodes/" + cleanedUrl;
@@ -341,30 +335,9 @@ public class CrawlTask implements Task{
 		}
 	}
 
-	private void addEdgeFromOtherDomain(String otherDomainUrl){
-		String pathToInFile = this.generateNodePath(this.url)+"/in";
-		try{
-			//System.out.printf("Adding url %s to file %s\n", this.url, pathToInFile);
-			PrintWriter outFileWriter = new PrintWriter(new BufferedWriter(new FileWriter(pathToInFile,true)));
-			outFileWriter.println(otherDomainUrl);
-			outFileWriter.flush();
-		}catch(FileNotFoundException exception){
-			System.out.println("CrawlTask: Error creating in file");
-			System.out.println(exception);
-			System.exit(-1);
-		}catch(SecurityException exception){
-			System.out.println("CrawlTask: Error creating in file");
-			System.out.println(exception);
-			System.exit(-1);
-		}catch(IOException exception){
-			System.out.println("CrawlTask: Error creating in file");
-			System.out.println(exception);
-			System.exit(-1);
-		}
-	}
 
-	private void sendTask(String otherDomainUrl)throws MalformedURLException{
-		CrawlerSendsCrawlTask taskEvent = new CrawlerSendsCrawlTask(otherDomainUrl, this.url);
+
+	protected void sendTask(Event event, String otherDomainUrl)throws MalformedURLException{
 
 		//Figure out what domain you're sending it to
 		String domain = new URL(otherDomainUrl).getHost();
@@ -374,7 +347,7 @@ public class CrawlTask implements Task{
 			domain = "http://www.colostate.edu/Depts/Psychology";
 		}
 
-		this.worker.sendTask(taskEvent, domain);
+		this.worker.sendTask(event, domain);
 	}//End sendTask
 
 	private void addBrokenLink(String brokenLink){

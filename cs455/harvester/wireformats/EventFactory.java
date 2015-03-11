@@ -47,6 +47,10 @@ public class EventFactory{
 		switch(type){
 			case 1:  	event = new CrawlerSendsCrawlTask(data);
 								break;
+			case 2:		event = new CrawlerAcknowledgesCrawlTask(data);
+								break;
+			case 3:   event = new CrawlerUpdateCompleteStatus(data);
+								break;
 			default: System.out.println("That message is not even a real message!");
 							 System.exit(-1);
 		}

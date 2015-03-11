@@ -13,8 +13,10 @@ import cs455.harvester.communication.Connection;
 import cs455.harvester.communication.ConnectionCache;
 import cs455.harvester.wireformats.Event;
 import cs455.harvester.wireformats.CrawlerSendsCrawlTask;
+import cs455.harvester.wireformats.CrawlerUpdateCompleteStatus;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -46,6 +48,12 @@ public class Crawler{
 	String[] hostNames = new String[7];
 	int[] ports = new int[7];
 	String[] domains = new String[7];
+	//Count for how many crawl requests are pending
+	private Integer pendingCrawlRequests = new Integer(0);
+
+	//This maps a domain to it's complete status
+	//When all of these are mapped to true, then it's time to exit
+	HashMap<String, Boolean> completeStatus = new HashMap<String, Boolean>();
 
 
 	public Crawler(int _portnum, int _threadPoolSize, String _rootUrl, String _pathToConfigFile){
@@ -135,6 +143,9 @@ public class Crawler{
 				int port = Integer.valueOf(line.substring(colonDelimiter+1,commaDelimiter));
 				String domain = line.substring(commaDelimiter+1);
 
+				//Set the whole map to false
+				completeStatus.put(domain, false);
+
 				//Check to see if this entry is the one for this crawler
 				//We don't want to be connecting to it later if it is
 				if(this.rootUrl.equals(domain)){
@@ -215,7 +226,14 @@ public class Crawler{
 	}
 
 	public void sendTask(Event event, String recievingDomain){
-		System.out.println("Sending task to domain " + recievingDomain);
+		//If we're sending a crawl request, increment pendingCrawlRequests
+		if(event.getType() == 1){
+			synchronized(this.pendingCrawlRequests){
+				this.pendingCrawlRequests++;
+			}
+		}
+
+		//System.out.println("Sending task to domain " + recievingDomain);
 		//Snag the connection that was set up to the recieving domain
 		synchronized(this.cache){
 			Connection connection = this.cache.get(recievingDomain);
@@ -312,14 +330,35 @@ public class Crawler{
 		return this.cache;
 	}//End getConnectionCache
 
+	public void setDone(boolean done){
+		this.completeStatus.put(this.rootUrl, done);
+
+		int doneint = 1;
+		if(!done) doneint = 0;
+		for(String domain : this.domains){
+			sendTask(new CrawlerUpdateCompleteStatus(this.rootUrl,doneint), domain);
+		}
+	}//End setDone
+
+	public boolean allDone(){
+		//If it contains no zeros,then everyone is done
+		return !this.completeStatus.containsValue(0);
+	}
+
 	public void onEvent(Event event){
-		System.out.println("crawler.onEvent()");
-		System.out.println(event);
+		//System.out.println("crawler.onEvent()");
+		//System.out.println(event);
 
 		int type = event.getType();
 
 		switch(type){
 			case 1:		this.eventOne(new CrawlerSendsCrawlTask(event.getBytes()));
+								break;
+			case 2:		synchronized(this.pendingCrawlRequests){
+									this.pendingCrawlRequests--;
+								}
+								break;
+			case 3:		this.eventThree(new CrawlerUpdateCompleteStatus(event.getBytes()));
 								break;
 			default: System.out.println("This doesn't seem to be a handled event");
 								break;
@@ -330,9 +369,19 @@ public class Crawler{
 		String crawlAddress = csct.getCrawlAddress();
 		String sendingAddress = csct.getSendingAddress();
 
-		CrawlTask newTask = new CrawlTask(crawlAddress, 0, this.rootFilePath,sendingAddress);
+		CrawlTask newTask = new RecievedCrawlTask(crawlAddress, 0, this.rootFilePath,sendingAddress);
 		manager.addTask(newTask);
 	}//End eventOne
+
+	private void eventThree(CrawlerUpdateCompleteStatus cucs){
+		String domain = cucs.getDomain();
+		int status = cucs.getStatus();
+
+		boolean flag = true;
+		if(status == 0) flag = false;
+
+		this.completeStatus.put(domain, flag);
+	}//Ends eventThree
 
 
 	//Anything past here is static and only used in main()--------------->>><<<

@@ -34,6 +34,9 @@ public class ThreadPoolManager implements Runnable{
 
   private final TaskRegistry completedTasks = new TaskRegistry();
 
+  //Use this to see if it's the first time for all of the threads in the pool
+  //They all end up there at oncat the very begining, and we need to ignore it
+  private boolean firstTime = true;
 
   public ThreadPoolManager(int _numberOfThreads, Crawler _crawler){
     numberOfThreads = _numberOfThreads;
@@ -112,6 +115,7 @@ public class ThreadPoolManager implements Runnable{
     synchronized(completedTasks){
       System.out.println("Manager: Adding completed task " + task);
       this.completedTasks.add(task);
+      this.crawler.setDone(false);
     }
   }//End addCompletedTask
 
@@ -133,7 +137,7 @@ public class ThreadPoolManager implements Runnable{
     synchronized(availableWorkers){
       System.out.println("Returning thread " + workerThread.getName() + " to pool");
       this.availableWorkers.add(workerThread);
-      System.out.println("Available Workers: " + availableWorkers.size());
+      //System.out.println("Available Workers: " + availableWorkers.size());
       if(availableWorkers.size() == this.numberOfThreads){
         this.checkDone();
       }
@@ -152,7 +156,18 @@ public class ThreadPoolManager implements Runnable{
   }
 
   private void checkDone(){
-    System.out.println("I think we're all done folks");
+    if(firstTime){
+      firstTime = false;
+      return;
+    }
+
+    //Else
+    this.crawler.setDone(true);
+    if(this.crawler.allDone()){
+      System.out.println("Crawler finished. Reciever Finished messages from all other crawlers");
+      System.out.println("Exiting...");
+      System.exit(1);
+    }
   }
 
 
