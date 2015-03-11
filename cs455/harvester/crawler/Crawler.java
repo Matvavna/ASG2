@@ -172,7 +172,7 @@ public class Crawler{
 			int port = ports[i];
 			String domain = domains[i];
 
-			System.out.println("Setting up connection to " + hostName);
+			System.out.println("Setting up connection to " + hostName + " on port " + port);
 
 			try{
 				Socket socket = new Socket(hostName, port);
