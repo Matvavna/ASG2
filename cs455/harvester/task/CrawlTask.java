@@ -32,6 +32,7 @@ public class CrawlTask implements Task{
 	private String url;
 	private final int recursionLevel;
 	private final String workingDirectory;
+	private String sentFrom = null;
 	//This does not get set in constructor, but by separate method
 	  //This is because the worker is not known when the task is created
 	private Worker worker;
@@ -42,11 +43,11 @@ public class CrawlTask implements Task{
 		workingDirectory = _workingDirectory;
 	}//End constructor
 
-	public CrawlTask(String s, int rl, String _workingDirectory, String sentFrom){
+	public CrawlTask(String s, int rl, String _workingDirectory, String _sentFrom){
 		url = s;
 		recursionLevel = rl;
 		workingDirectory = _workingDirectory;
-		this.updateIn(sentFrom);
+		sentFrom = _sentFrom;
 	}//End constructor
 
 
@@ -76,6 +77,11 @@ public class CrawlTask implements Task{
 
 		//Set up directory and files
 		this.initDirectory(this.generateNodePath(this.url));
+
+		//If this task was sent from another domain, we need to add that url to our in file
+		if(this.sentFrom!=null){
+			this.updateIn(this.sentFrom);
+		}
 
 		ArrayList<Task> newTasks = new ArrayList<Task>();
 
